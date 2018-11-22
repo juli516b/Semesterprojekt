@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace nytEksamensprojekt.Migrations
+namespace Semesterprojekt.Migrations
 {
     public partial class InitialCreate : Migration
     {

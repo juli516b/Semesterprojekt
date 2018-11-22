@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace nytEksamensprojekt.Entities
+namespace Semesterprojekt.Core.Entites 
 {
-    public class Trophy
+    public class Trophy : EntityBase
     {
-        public int Id { get; set; }
         public int Goal { get; set; }
         public string Description { get; set; }
 

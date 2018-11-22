@@ -2,17 +2,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using nytEksamensprojekt.Entities;
+using Semesterprojekt.Persistence;
 
-namespace nytEksamensprojekt.Migrations
+namespace Semesterprojekt.Persistence.Migrations
 {
     [DbContext(typeof(GoTrainDbContext))]
-    [Migration("20181122131706_InitialCreate")]
-    partial class InitialCreate
+    partial class GoTrainDbContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
