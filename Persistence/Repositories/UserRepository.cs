@@ -74,7 +74,7 @@ namespace Semesterprojekt.Persistence.Repositories
         {
             if (await GoTrainDbContext.Users.AnyAsync(x => x.UserName == username))
                 return true;
-
+            
             return false;
         }
     }

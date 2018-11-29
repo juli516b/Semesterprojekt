@@ -20,7 +20,6 @@ namespace Semesterprojekt.Presentation.Controllers
         private readonly IMapper _mapper;
         private readonly IUserRepository _repository;
         private readonly IConfiguration _configuration;
-        private readonly AppSettings _appSettings;
 
         public UsersController (IMapper mapper, IUserRepository repository, IConfiguration configuration) {
             _mapper = mapper;
