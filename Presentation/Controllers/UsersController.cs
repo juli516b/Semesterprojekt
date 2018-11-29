@@ -1,128 +1,85 @@
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Semesterprojekt.API.Presentation.Models;
 using Semesterprojekt.Core.Entites;
 using Semesterprojekt.Core.Repositories;
 using Semesterprojekt.Infrastructure.Helpers;
-using Semesterprojekt.Presentation.Models;
-
-namespace Semesterprojekt.Presentation.Controllers 
+namespace Semesterprojekt.Presentation.Controllers
 {
+    [ApiController]
     [Route ("api/users")]
-    public class UsersController : Controller {
+    public class UsersController : ControllerBase {
         private readonly IMapper _mapper;
         private readonly IUserRepository _repository;
+        private readonly IConfiguration _configuration;
         private readonly AppSettings _appSettings;
 
-        public UsersController (IMapper mapper, IUserRepository repository, IOptions<AppSettings> appSettings) {
+        public UsersController (IMapper mapper, IUserRepository repository, IConfiguration configuration) {
             _mapper = mapper;
             _repository = repository;
-            _appSettings = appSettings.Value;
+            _configuration = configuration;
         }
 
-        [AllowAnonymous]
-        [HttpPost("authenticate")]
-        public IActionResult Authenticate([FromBody]UserDto userDto)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(UserDtoForRegisterDto userDtoForRegisterDto)
         {
-            var user = _repository.Authenticate(userDto.Username, userDto.Password);
+            //Vigtigt at username ikke er casesensitive. Derfor skal username laves lowercase.
+            userDtoForRegisterDto.Username = userDtoForRegisterDto.Username.ToLower();
+            if (await _repository.UserExists(userDtoForRegisterDto.Username))
+                return BadRequest("Username already exists");
+            //Kun muligt at tilføje username til useren der skal laves, da vi skal hashe passworded først
+            var userToCreate = _mapper.Map<User>(userDtoForRegisterDto);
+            var createdUser = await _repository.Register(userToCreate, userDtoForRegisterDto.Username);
+            return StatusCode(201);
+        }
 
-            if (user == null)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
+        {
+            //Tjek om useren findes
+            var userFromRepo = await _repository.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
+
+
+            if (userFromRepo == null)
+                return Unauthorized();
+
+            //Tokennet indeholder to claims. Det ene er Userens ID og userens Username
+            var claims = new[]
             {
-                return BadRequest(new { message = "Username or password is incorrect" });
-            }
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.Name, user.Id.ToString())
-                }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
+                new Claim(ClaimTypes.Name, userFromRepo.UserName)
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
+            //For at finde ud af tokennet er et valid token skal serveren signe tokennet. 
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Secret").Value));
 
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            //Fortæller noget om hvordan tokennet skal opbygges - altså payloaden.
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(1),
+                SigningCredentials = creds
+            };
+
+            //Handleren kan lave tokens, hvilket tokendescriptoren skal bruges til.
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            //Her returnere vi tokennet med Ok og skriver den ud til useren. 
             return Ok(new
             {
-                Id = user.Id,
-                UserName = user.UserName,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Token = tokenString
+                token = tokenHandler.WriteToken(token)
             });
-        }
-
-        [AllowAnonymous]
-        [HttpPost("register")]
-        public IActionResult Register([FromBody]UserDto userDto)
-        {
-            var user = _mapper.Map<User>(userDto);
-
-            try
-            {
-                _repository.Create(user, userDto.Password);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        // GET api/users
-        [HttpGet ("")]
-        public IActionResult GetAll ()
-        {
-            var users = _repository.GetAll();
-            var userDtos = _mapper.Map<IList<UserDto>>(users);
-            return Ok(userDtos);
-        }
-
-        // GET api/users/5
-        [HttpGet ("{id}")]
-        public IActionResult GetById (int userId) 
-        {
-            var user = _repository.GetById(userId);
-            var userDto = _mapper.Map<UserDto>(user);
-            return Ok(userDto);
-        }
-
-        [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody]UserDto userDto)
-        {
-            // map dto to entity and set id
-            var user = _mapper.Map<User>(userDto);
-            user.Id = id;
-
-            try
-            {
-                // save 
-                _repository.Update(user, userDto.Password);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                // return error message if there was an exception
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
-        {
-            _repository.Delete(id);
-            return Ok();
         }
     }
 }

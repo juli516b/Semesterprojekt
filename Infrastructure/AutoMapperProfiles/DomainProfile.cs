@@ -1,6 +1,6 @@
 using AutoMapper;
 using Semesterprojekt.Core.Entites;
-using Semesterprojekt.Presentation.Models;
+using Semesterprojekt.API.Presentation.Models;
 
 namespace Semesterprojekt.Infrastructure.AutoMapperProfiles
 {
@@ -8,7 +8,7 @@ namespace Semesterprojekt.Infrastructure.AutoMapperProfiles
     {
         public DomainProfile()
         {
-            CreateMap<User, UserDto>().ReverseMap();
+            CreateMap<User, UserDtoForRegisterDto>().ReverseMap();
         }
     }
 }
