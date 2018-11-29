@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using nytEksamensprojekt.Entities;
+using Semesterprojekt.Core.Entites;
 
-namespace nytEksamensprojekt.Entities {
+namespace Semesterprojekt.Persistence
+{
     public class GoTrainDbContext : DbContext {
         public GoTrainDbContext (DbContextOptions<GoTrainDbContext> options) : base (options) { }
         public DbSet<Trophy> Trophies { get; set; }

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace nytEksamensprojekt.Entities
+namespace Semesterprojekt.Core.Entites 
 {
     public class UserTrainingSession
     {

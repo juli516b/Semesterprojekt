@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 
-namespace nytEksamensprojekt.Entities
+namespace Semesterprojekt.Core.Entites 
 {
-    public class TrainingSession
+    public class TrainingSession : EntityBase
     {
-        public int Id { get; set; }
         public string Description { get; set; }
         public ICollection<UserTrainingSession> UserTrainingSessions { get; set; }
     }
